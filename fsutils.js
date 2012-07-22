@@ -263,7 +263,7 @@ FsUtils.prototype.fetch = function(arguments, callback) {
       } else {
        self.batch([
               {cmd: FsUtils.CMD_OPEN, name: name, create: true,
-               exclusive: false },
+               exclusive: true },
               {cmd: FsUtils.CMD_WRITE, data: xhr.response },
             ],
             function(result) {
@@ -274,8 +274,9 @@ FsUtils.prototype.fetch = function(arguments, callback) {
     xhr.send();
   };
   if (!arguments.overwrite) {
-    this.open({ name: url, create: true, exclusive: true }, function(result) {
-      if (!result) {
+    this.open({ name: name, create: false, exclusive: false },
+        function(result) {
+      if (result) {
         console.log('skip fetching ' + url + ' to ' + name);
         callback(true);
       } else {
