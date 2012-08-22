@@ -84,18 +84,18 @@ FsUtils.TYPE_BLOB = 'blob';
 
 /**
  * Open or create a file with specified arguments.
- * @param {Object} arguments Arguments as a json object.
+ * @param {Object} args Arguments as a json object.
  *   - {string} name A filename to open.
  *   - {boolean} create Create a new file if it doesn't exist.
  *   - {boolean} exclusive Open the file with exclusive permission.
  * @param {function} callback A completion callback.
  *   - {boolean} result Result
  */
-FsUtils.prototype.open = function(arguments, callback) {
-  console.log(arguments);
+FsUtils.prototype.open = function(args, callback) {
+  console.log(args);
   var self = this;
-  this.cwd.getFile(arguments.name,
-      {create: arguments.create, exclusive: arguments.exclusive},
+  this.cwd.getFile(args.name,
+      { create: args.create, exclusive: args.exclusive },
       function(entry) {
         console.log(entry);
         self.entry = entry;
@@ -111,17 +111,17 @@ FsUtils.prototype.open = function(arguments, callback) {
 
 /**
  * Read from current working file.
- * @param {Object} arguments Arguments as a json object.
+ * @param {Object} args Arguments as a json object.
  *   - {string} type Result type.
  *   - {Object} result Object to receive results.
  * @param {function} callback A completion callback.
  *   - {boolean} result Result
  */
-FsUtils.prototype.read = function(arguments, callback) {
-  console.log(arguments);
+FsUtils.prototype.read = function(args, callback) {
+  console.log(args);
   var self = this;
-  var result = arguments.result;
-  result.type = arguments.type;
+  var result = args.result;
+  result.type = args.type;
   result.success = false;
   var doRead = function() {
     if (FsUtils.TYPE_BLOB == result.type) {
@@ -162,15 +162,14 @@ FsUtils.prototype.read = function(arguments, callback) {
 
 /**
  * Write provided data to current working file.
- * @param {Object} arguments Arguments as a json object.
+ * @param {Object} args Arguments as a json object.
  *   - {string|ArrayBuffer|Blob} data Data to write.
  * @param {function} callback A completion callback.
  *   - {boolean} result Result
  */
-FsUtils.prototype.write = function(arguments, callback) {
-  console.log(arguments);
+FsUtils.prototype.write = function(args, callback) {
+  console.log(args);
   var self = this;
-  var data = arguments.data;
   var doWrite = function() {
     self.writer.onwriteend = function(e) {
       callback(true);
@@ -180,7 +179,7 @@ FsUtils.prototype.write = function(arguments, callback) {
       callback(false);
     };
     var bb = new window.BlobBuilder();
-    bb.append(data);
+    bb.append(args.data);
     self.writer.write(bb.getBlob());
   };
   if (null == this.writer) {
@@ -200,14 +199,14 @@ FsUtils.prototype.write = function(arguments, callback) {
  
 /**
  * Make directory with specified arguments.
- * @param {Object} arguments Arguments as a json object.
+ * @param {Object} args Arguments as a json object.
  *   - {string} name A directory name to create.
  * @param {function} callback A completion callback.
  *   - {boolean} result Result
  */
-FsUtils.prototype.mkdir = function(arguments, callback) {
-  console.log(arguments);
-  this.cwd.getDirectory(arguments.name, {create: true},
+FsUtils.prototype.mkdir = function(args, callback) {
+  console.log(args);
+  this.cwd.getDirectory(args.name, {create: true},
       function(entry) {
         console.log(entry);
         callback(true);
@@ -220,15 +219,14 @@ FsUtils.prototype.mkdir = function(arguments, callback) {
 
 /**
  * Truncate the current working file.
- * @param {Object} arguments Arguments as a json object.
+ * @param {Object} args Arguments as a json object.
  *   - {number} size The size to which the length of file is to be adjusted.
  * @param {function} callback A completion callback.
  *   - {boolean} result Result
  */
-FsUtils.prototype.truncate = function(arguments, callback) {
-  console.log(arguments);
+FsUtils.prototype.truncate = function(args, callback) {
+  console.log(args);
   var self = this;
-  var size = arguments.size;
   var doTruncate = function() {
     self.writer.onwriteend = function(e) {
       callback(true);
@@ -237,7 +235,7 @@ FsUtils.prototype.truncate = function(arguments, callback) {
       console.log(e);
       callback(false);
     };
-    self.writer.truncate(size);
+    self.writer.truncate(args.size);
   };
   if (null == this.writer) {
     this.entry.createWriter(
@@ -256,15 +254,15 @@ FsUtils.prototype.truncate = function(arguments, callback) {
 
 /**
  * Change current working directory.
- * @param {Object} arguments Arguments as a json object.
+ * @param {Object} args Arguments as a json object.
  *   - {string} name A directory name to move into.
  * @param {function} callback A completion callback.
  *   - {boolean} result Result
  */
-FsUtils.prototype.chdir = function(arguments, callback) {
-  console.log(arguments);
+FsUtils.prototype.chdir = function(args, callback) {
+  console.log(args);
   var self = this;
-  this.cwd.getDirectory(arguments.name, {create: false},
+  this.cwd.getDirectory(args.name, { create: false },
       function(entry) {
         console.log(entry);
         self.cwd = entry;
@@ -278,28 +276,26 @@ FsUtils.prototype.chdir = function(arguments, callback) {
 
 /**
  * Fetch URL page and copy to the specified file.
- * @param {Object} arguments Arguments as a json object.
+ * @param {Object} args Arguments as a json object.
  *   - {string} name A filename to store to.
  *   - {string} url A URL to download data from.
  *   - {boolean} overwrite True to overwrite even if the specified file exists.
  * @param {function} callback A completion callback.
  *   - {boolean} result Result
  */
-FsUtils.prototype.fetch = function(arguments, callback) {
-  console.log(arguments);
+FsUtils.prototype.fetch = function(args, callback) {
+  console.log(args);
   var self = this;
-  var name = arguments.name;
-  var url = arguments.url;
   var doFetch = function() {
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
+    xhr.open('GET', args.url, true);
     xhr.responseType = 'arraybuffer';
     xhr.onload = function() {
       if (200 != xhr.status) {
         callback(false);
       } else {
        self.batch([
-              {cmd: FsUtils.CMD_OPEN, name: name, create: true,
+              {cmd: FsUtils.CMD_OPEN, name: args.name, create: true,
                exclusive: true },
               {cmd: FsUtils.CMD_WRITE, data: xhr.response },
             ],
@@ -310,11 +306,11 @@ FsUtils.prototype.fetch = function(arguments, callback) {
     };
     xhr.send();
   };
-  if (!arguments.overwrite) {
-    this.open({ name: name, create: false, exclusive: false },
+  if (!args.overwrite) {
+    this.open({ name: args.name, create: false, exclusive: false },
         function(result) {
       if (result) {
-        console.log('skip fetching ' + url + ' to ' + name);
+        console.log('skip fetching ' + args.url + ' to ' + args.name);
         callback(true);
       } else {
         doFetch();
