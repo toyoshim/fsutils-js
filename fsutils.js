@@ -41,8 +41,6 @@
 function FsUtils(persistent, size, callback) {
   window.requestFileSystem =
       window.requestFileSystem || window.webkitRequestFileSystem;
-  window.BlobBuilder =
-      window.BlobBuilder || window.WebKitBlobBuilder;
   var type = persistent ? window.PERSISTENT : window.TEMPORARY;
   var self = this;
   this.fs = null;
@@ -178,9 +176,7 @@ FsUtils.prototype.write = function(args, callback) {
       console.log(e);
       callback(false);
     };
-    var bb = new window.BlobBuilder();
-    bb.append(args.data);
-    self.writer.write(bb.getBlob());
+    self.writer.write(new Blob([args.data]));
   };
   if (null == this.writer) {
     this.entry.createWriter(
