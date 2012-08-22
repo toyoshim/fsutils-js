@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Takashi TOYOSHIMA <toyoshim@gmail.com>
+ * Copyright (c) 2012 Takashi TOYOSHIMA <toyoshim@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,6 +69,7 @@ function FsUtils(persistent, size, callback) {
 FsUtils.CMD_OPEN = 'open';
 FsUtils.CMD_READ = 'read';
 FsUtils.CMD_WRITE = 'write';
+FsUtils.CMD_TRUNCATE = 'truncate';
 FsUtils.CMD_MKDIR = 'mkdir';
 FsUtils.CMD_CHDIR = 'chdir';
 FsUtils.CMD_FETCH = 'fetch';
@@ -218,6 +219,42 @@ FsUtils.prototype.mkdir = function(arguments, callback) {
 };
 
 /**
+ * Truncate the current working file.
+ * @param {Object} arguments Arguments as a json object.
+ *   - {number} size The size to which the length of file is to be adjusted.
+ * @param {function} callback A completion callback.
+ *   - {boolean} result Result
+ */
+FsUtils.prototype.truncate = function(arguments, callback) {
+  console.log(arguments);
+  var self = this;
+  var size = arguments.size;
+  var doTruncate = function() {
+    self.writer.onwriteend = function(e) {
+      callback(true);
+    };
+    self.writer.onerror = function(e) {
+      console.log(e);
+      callback(false);
+    };
+    self.writer.truncate(size);
+  };
+  if (null == this.writer) {
+    this.entry.createWriter(
+        function(writer) {
+          self.writer = writer;
+          doTruncate();
+        },
+        function(e) {
+          console.log(e);
+          callback(false);
+        });
+  } else {
+    doTruncate();
+  }
+};
+
+/**
  * Change current working directory.
  * @param {Object} arguments Arguments as a json object.
  *   - {string} name A directory name to move into.
@@ -323,6 +360,9 @@ FsUtils.prototype.batch = function(batch, callback) {
     case FsUtils.CMD_WRITE:
       this.write(item, doNext);
       break;
+    case FsUtils.CMD_TRUNCATE:
+      this.truncate(item, doNext);
+      break;
     case FsUtils.CMD_MKDIR:
       this.mkdir(item, doNext);
       break;
@@ -365,6 +405,7 @@ FsUtils.unittest = function() {
         { cmd: FsUtils.CMD_OPEN, name: 'foo.txt', create: true,
             exclusive: false },
         { cmd: FsUtils.CMD_WRITE, data: new ArrayBuffer(32) },
+        { cmd: FsUtils.CMD_TRUNCATE, size: 16 },
         { cmd: FsUtils.CMD_CHDIR, name: '..' },
         { cmd: FsUtils.CMD_FETCH, name: 'sdcard.img', url: 'sdcard.img',
             overwrite: false },
