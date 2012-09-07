@@ -128,7 +128,7 @@ FsUtils.prototype.read = function(args, callback) {
       callback(true);
     } else {
       var reader = new FileReader();
-      reader.onloadend = function(e) {
+      reader.onload = function(e) {
         result.data = this.result;
         result.success = true;
         callback(true);
@@ -169,7 +169,7 @@ FsUtils.prototype.write = function(args, callback) {
   console.log(args);
   var self = this;
   var doWrite = function() {
-    self.writer.onwriteend = function(e) {
+    self.writer.onwrite = function(e) {
       callback(true);
     };
     self.writer.onerror = function(e) {
@@ -224,7 +224,7 @@ FsUtils.prototype.truncate = function(args, callback) {
   console.log(args);
   var self = this;
   var doTruncate = function() {
-    self.writer.onwriteend = function(e) {
+    self.writer.onwrite = function(e) {
       callback(true);
     };
     self.writer.onerror = function(e) {
@@ -293,6 +293,7 @@ FsUtils.prototype.fetch = function(args, callback) {
        self.batch([
               {cmd: FsUtils.CMD_OPEN, name: args.name, create: true,
                exclusive: true },
+              {cmd: FsUtils.CMD_TRUNCATE, size: 0 },
               {cmd: FsUtils.CMD_WRITE, data: xhr.response },
             ],
             function(result) {
